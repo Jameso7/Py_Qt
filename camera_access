@@ -1,0 +1,83 @@
+import sys
+import cv2
+import datetime
+
+from PyQt5 import QtCore
+from PyQt5.QtCore import pyqtSlot #GUI Load
+from PyQt5.uic import loadUi #GUI load 
+from PyQt5.QtGui import QPixmap, QImage #Image to display
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QDialog
+
+
+
+class cameraCapture(QDialog):
+    def __init__(self):
+        super(cameraCapture, self).__init__()
+        loadUi('record.ui', self)
+        self.logic = 0
+        self.value = 1
+
+        self.START.clicked.connect(self.STARTClicked)
+        self.TEXT.setText('Press Start to start the webcam')
+
+        self.STOP.clicked.connect(self.STOPClicked)
+
+
+    @pyqtSlot()
+
+    def STARTClicked(self):
+        print("Start Clicked")
+        self.TEXT.setText('Press Capture to capture Image')
+
+        cap = cv2.VideoCapture(0)
+        while (cap.isOpened()):
+            ret, frame = cap.read()
+            if ret == True:
+                self.display_video(frame,1)
+            cv2.waitKey()
+            if (self.logic == 2):
+                    self.value =self.value+1
+                    cv2.imwrite('New_pic.png', frame)
+
+                    self.logic=1
+                    self.TEXT.setText('Your Image is Saved, for another press capture')
+
+            else:
+            	print("return not found")
+        cap.release()
+        cv2.destroyAllWindows()
+        
+
+     
+    def STOPClicked(self):
+        print("Stop Clicked")
+        self.logic = 2
+        self.TEXT.setText('Image Captured')
+
+    def display_video(self, img, window=1):
+        qformat = QImage.Format_Indexed8
+
+        if len(img.shape) == 3:
+            if (img.shape[2]) == 4:
+                qformat = QImage.Format_RGBA888
+
+            else:
+                qformat = QImage.Format_RGB888
+        img = QImage(img, img.shape[1], img.shape[0], qformat)
+        img = img.rgbSwapped()
+
+        self.imgLabel.setPixmap(QPixmap.fromImage(img))
+        self.imgLabel.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+
+
+app = QApplication(sys.argv)
+window = cameraCapture()
+window.show()
+
+try:
+    sys.exit(app.exec_())
+except: 
+    print('Exiting')
+
+    # self.DATA.toPlainText()
